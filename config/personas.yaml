@@ -1,0 +1,94 @@
+# 페르소나 정의 — 콜드 스타트 대응용 합성 로그의 생성 규칙
+#
+# 읽는 법
+#   weight            : 전체 유저 중 이 페르소나가 뽑힐 상대 확률
+#   daily_sessions    : 하루 세션 수의 Poisson λ
+#   actions_per_session: 세션당 위젯 클릭 수의 Poisson λ (최소 1)
+#   persona_ratio     : 위젯 선택 시 "페르소나 취향"을 따를 확률.
+#                       나머지 (1 - persona_ratio) 는 global_popularity 를 따릅니다.
+#                       → 이 값이 낮을수록 인기 편중이 심해집니다.
+#   affinity          : 페르소나 취향 분포(상대 가중치). 명시 안 한 위젯은 0.
+#   hour_weights      : 0시~23시 접속 확률의 상대 가중치 (길이 24)
+#   fallback          : Redis 에 후보가 없을 때 내려줄 기본 위젯 (설계서 5장)
+
+personas:
+  - id: rookie
+    name: 사회초년생
+    weight: 0.35
+    daily_sessions: 2.0
+    actions_per_session: 2.5
+    persona_ratio: 0.7
+    affinity:
+      salary_manage: 10
+      savings: 8
+      card_usage: 7
+      spend_report: 6
+      budget: 4
+      goal_saving: 3
+      acct_balance: 5
+      acct_transfer: 3
+      card_due: 3
+    hour_weights: [1,0.5,0.3,0.2,0.2,0.3,1,2,3,2,1.5,2, 3,2,1.5,1.5,2,3,5,6,7,6,4,2]
+    fallback: [acct_balance, salary_manage, card_usage, savings, spend_report, acct_transfer]
+
+  - id: investor
+    name: 투자 적극형
+    weight: 0.25
+    daily_sessions: 6.0
+    actions_per_session: 3.5
+    persona_ratio: 0.8
+    affinity:
+      stock_status: 12
+      watchlist: 10
+      market_index: 7
+      fx_rate: 4
+      fund: 3
+      acct_balance: 4
+      acct_transfer: 2
+      deposit: 1
+    hour_weights: [0.5,0.3,0.2,0.2,0.2,0.3,1,2,4,9,8,7, 6,7,8,6,2,1.5,2,2,2,2,1.5,1]
+    fallback: [stock_status, watchlist, market_index, acct_balance, fx_rate, acct_transfer]
+
+  - id: owner
+    name: 자영업자
+    weight: 0.2
+    daily_sessions: 3.5
+    actions_per_session: 3.0
+    persona_ratio: 0.75
+    affinity:
+      biz_account: 11
+      acct_transfer: 9
+      tax_invoice: 6
+      loan: 4
+      acct_history: 5
+      acct_balance: 5
+      card_usage: 2
+    hour_weights: [0.3,0.2,0.2,0.2,0.3,1,2,4,7,9,8,6, 3,4,4,3,2,2,2,1.5,1.5,1,0.7,0.5]
+    fallback: [biz_account, acct_transfer, acct_balance, tax_invoice, acct_history, loan]
+
+  - id: senior
+    name: 시니어
+    weight: 0.2
+    daily_sessions: 1.2
+    actions_per_session: 1.8
+    persona_ratio: 0.65
+    affinity:
+      acct_balance: 12
+      acct_transfer: 8
+      pension: 7
+      utility_bill: 5
+      maintenance_fee: 4
+      deposit: 3
+      acct_history: 3
+    hour_weights: [0.2,0.1,0.1,0.1,0.3,1,3,4,5,6,6,4, 3,4,4,3,2,2,1.5,1,0.7,0.5,0.3,0.2]
+    fallback: [acct_balance, acct_transfer, pension, utility_bill, deposit, acct_history]
+
+# 로그 생성 기본값 (CLI 인자로 덮어쓸 수 있습니다)
+generation:
+  n_users: 2000
+  days: 60
+  start_date: "2025-10-01"
+  seed: 42
+  # 노출됐지만 클릭하지 않은 이벤트도 생성할지 — Fatigue 항의 입력이 됩니다.
+  emit_impressions: true
+  impressions_per_click: 3

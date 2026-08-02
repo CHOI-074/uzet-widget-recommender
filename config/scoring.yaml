@@ -1,0 +1,92 @@
+# 하이브리드 스코어 설정
+#
+#   final_score(u, w, ctx) = alpha * ALS_norm(u, w)
+#                          + beta  * Context_boost(w, ctx)
+#                          + gamma * Recency(u, w)
+#                          - delta * Fatigue(u, w)
+#
+# 값을 바꿔가며 추천 결과가 어떻게 달라지는지 docs/evaluation.md 에 기록하세요.
+# "왜 이 값이죠?" 에 답할 수 있어야 합니다.
+
+weights:
+  alpha: 1.00   # 장기 선호 (ALS)
+  beta:  0.40   # 실시간 맥락
+  gamma: 0.25   # 최근성
+  delta: 0.30   # 피로도
+
+recency:
+  # 마지막 사용 후 half_life_hours 가 지나면 Recency 항이 0.5 로 감소
+  half_life_hours: 72
+
+fatigue:
+  # 노출됐는데 클릭 안 한 횟수가 saturation 에 도달하면 페널티가 1.0 으로 포화
+  saturation: 5
+
+serving:
+  candidate_top_k: 50   # 오프라인에서 유저당 미리 뽑아둘 후보 수
+  default_n: 6          # API 기본 반환 개수
+  # 같은 카테고리가 결과를 독식하지 않도록 제한 (0 이면 비활성)
+  max_per_category: 3
+
+# --- Context 규칙 ---
+# condition.type 별 필요한 필드
+#   day_of_month_near : day, tolerance          (급여일 ±N)
+#   day_of_month_gte  : day                     (월말)
+#   days_before_day   : day, lead               (카드 결제일 D-N)
+#   time_range        : start, end (HH:MM)
+#   weekday           : days [0=월 ... 6=일]
+#   flag              : name                    (요청에 실린 불리언 플래그)
+# 여러 조건은 AND 로 묶입니다 (all).
+context_rules:
+  - name: payday
+    description: 급여일 ±1일
+    all:
+      - {type: day_of_month_near, day: 25, tolerance: 1}
+    boost:
+      salary_manage: 1.0
+      savings: 0.7
+      acct_auto_transfer: 0.6
+
+  - name: market_open
+    description: 평일 장 운영시간
+    all:
+      - {type: weekday, days: [0, 1, 2, 3, 4]}
+      - {type: time_range, start: "09:00", end: "15:30"}
+    boost:
+      stock_status: 1.0
+      watchlist: 0.8
+      market_index: 0.5
+
+  - name: card_due_soon
+    description: 카드 결제일(14일) D-3
+    all:
+      - {type: days_before_day, day: 14, lead: 3}
+    boost:
+      card_due: 1.0
+      card_usage: 0.6
+
+  - name: roaming
+    description: 해외 IP / 로밍 감지
+    all:
+      - {type: flag, name: is_roaming}
+    boost:
+      fx_exchange: 1.0
+      overseas_remit: 0.8
+      fx_rate: 0.6
+
+  - name: month_end
+    description: 월말 (25일 이후)
+    all:
+      - {type: day_of_month_gte, day: 25}
+    boost:
+      utility_bill: 0.8
+      maintenance_fee: 0.7
+
+  - name: business_morning
+    description: 평일 오전 (사업자 업무 시간)
+    all:
+      - {type: weekday, days: [0, 1, 2, 3, 4]}
+      - {type: time_range, start: "09:00", end: "12:00"}
+    boost:
+      biz_account: 0.6
+      tax_invoice: 0.5

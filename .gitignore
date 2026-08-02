@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# 생성 데이터와 학습 산출물은 커밋하지 않습니다.
+# 대신 README 에 "python -m src.datagen.log_generator 로 재생성" 을 적어두세요.
+data/*
+!data/.gitkeep

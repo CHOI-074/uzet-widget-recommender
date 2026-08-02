@@ -1,0 +1,71 @@
+# 위젯 카탈로그
+# id 는 전역 유일. category 는 EDA/Coverage 분석과 폴백 세트 구성에 씁니다.
+widgets:
+  # --- 계좌 ---
+  - {id: acct_balance,       name: 잔액조회,        category: account}
+  - {id: acct_transfer,      name: 이체,            category: account}
+  - {id: acct_auto_transfer, name: 자동이체,        category: account}
+  - {id: acct_history,       name: 거래내역,        category: account}
+
+  # --- 소비 ---
+  - {id: card_usage,         name: 카드실적,        category: spending}
+  - {id: card_due,           name: 결제예정금액,    category: spending}
+  - {id: spend_report,       name: 소비리포트,      category: spending}
+  - {id: budget,             name: 예산관리,        category: spending}
+
+  # --- 저축 ---
+  - {id: salary_manage,      name: 월급관리,        category: saving}
+  - {id: savings,            name: 적금,            category: saving}
+  - {id: deposit,            name: 예금,            category: saving}
+  - {id: goal_saving,        name: 목표저축,        category: saving}
+
+  # --- 투자 ---
+  - {id: stock_status,       name: 주식현황,        category: invest}
+  - {id: watchlist,          name: 관심종목,        category: invest}
+  - {id: market_index,       name: 지수,            category: invest}
+  - {id: fund,               name: 펀드,            category: invest}
+  - {id: pension,            name: 연금,            category: invest}
+
+  # --- 외환 ---
+  - {id: fx_rate,            name: 환율,            category: fx}
+  - {id: fx_exchange,        name: 환전,            category: fx}
+  - {id: overseas_remit,     name: 해외송금,        category: fx}
+
+  # --- 사업 ---
+  - {id: biz_account,        name: 사업자계좌,      category: business}
+  - {id: tax_invoice,        name: 세금계산서,      category: business}
+  - {id: loan,               name: 대출,            category: business}
+
+  # --- 생활 ---
+  - {id: utility_bill,       name: 공과금,          category: living}
+  - {id: maintenance_fee,    name: 관리비,          category: living}
+
+# 롱테일을 만들기 위한 전역 인기도(모든 페르소나에 공통으로 섞이는 분포).
+# 의도적으로 상위 3개에 쏠리게 잡았습니다. — 설계서 3장 "의도적 불균형"
+# 값은 상대 가중치이며 생성기에서 정규화합니다.
+global_popularity:
+  acct_balance: 30
+  acct_transfer: 18
+  acct_history: 12
+  card_usage: 6
+  spend_report: 4
+  savings: 4
+  salary_manage: 3
+  stock_status: 3
+  card_due: 3
+  watchlist: 2
+  fx_rate: 2
+  budget: 1.5
+  deposit: 1.5
+  market_index: 1.5
+  goal_saving: 1
+  fund: 1
+  pension: 1
+  acct_auto_transfer: 1
+  fx_exchange: 1
+  overseas_remit: 0.7
+  utility_bill: 0.7
+  maintenance_fee: 0.7
+  biz_account: 0.7
+  tax_invoice: 0.5
+  loan: 0.5
