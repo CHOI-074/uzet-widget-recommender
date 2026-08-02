@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 528" width="900" height="528" role="img" aria-label="UZET 추천 엔진 아키텍처">
+<title>UZET — 오프라인 학습 / 온라인 서빙 분리 아키텍처</title>
+<defs>
+<marker id="mk-offline" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#3D6B8C"/></marker>
+<marker id="mk-online" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#A65D3A"/></marker>
+<marker id="mk-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#9AA4AE"/></marker>
+<marker id="mk-store" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,1 L9,5 L0,9 z" fill="#2F6F5E"/></marker>
+</defs>
+<rect width="900" height="528" fill="#FAFAF8"/>
+<text x="40" y="40" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="19" font-weight="700" fill="#1F2328" text-anchor="start">10ms를 만드는 구조</text>
+<text x="40" y="62" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="400" fill="#6E7781" text-anchor="start">무거운 연산은 오프라인으로, 실시간 요소만 실시간으로</text>
+<rect x="30" y="84" width="840" height="136" rx="14" fill="#FFFFFF" stroke="#E1E4E8" stroke-width="1.5"/>
+<rect x="30" y="84" width="5" height="136" rx="2.5" fill="#3D6B8C"/>
+<text x="54" y="112" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="700" fill="#3D6B8C" text-anchor="start" letter-spacing="0.3">오프라인 — 배치 (일 1회)</text>
+<rect x="54" y="130" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="137.0" y="157" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">이벤트 로그</text>
+<text x="137.0" y="176" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">click · impression</text>
+<line x1="228" y1="162" x2="254" y2="162" stroke="#3D6B8C" stroke-width="2" marker-end="url(#mk-offline)"/>
+<rect x="262" y="130" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="345.0" y="157" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">상호작용 행렬</text>
+<text x="345.0" y="176" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">user × item · CSR</text>
+<line x1="436" y1="162" x2="462" y2="162" stroke="#3D6B8C" stroke-width="2" marker-end="url(#mk-offline)"/>
+<rect x="470" y="130" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="553.0" y="157" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">ALS 학습</text>
+<text x="553.0" y="176" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">implicit · factors=64</text>
+<line x1="644" y1="162" x2="670" y2="162" stroke="#3D6B8C" stroke-width="2" marker-end="url(#mk-offline)"/>
+<rect x="678" y="130" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="761.0" y="157" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">Top-K 후보</text>
+<text x="761.0" y="176" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">유저당 50개</text>
+<line x1="450" y1="220" x2="450" y2="248" stroke="#2F6F5E" stroke-width="2" marker-end="url(#mk-store)"/>
+<text x="462" y="243" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2F6F5E" text-anchor="start">저장</text>
+<rect x="180" y="250" width="540" height="66" rx="12" fill="#EAF5F1" stroke="#2F6F5E" stroke-width="1.8"/>
+<text x="450" y="278" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="15" font-weight="700" fill="#2F6F5E" text-anchor="middle">CandidateStore</text>
+<text x="414" y="299" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11.5" font-weight="400" fill="#6E7781" text-anchor="end">key: cand:{user_id}</text>
+<text x="424" y="299" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="11.5" font-weight="400" fill="#6E7781" text-anchor="middle">·</text>
+<text x="434" y="299" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="11.5" font-weight="400" fill="#6E7781" text-anchor="start">Redis / File 교체 가능</text>
+<line x1="450" y1="316" x2="450" y2="346" stroke="#2F6F5E" stroke-width="2" marker-end="url(#mk-store)"/>
+<text x="462" y="341" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="600" fill="#2F6F5E" text-anchor="start">조회</text>
+<rect x="30" y="348" width="840" height="136" rx="14" fill="#FFFFFF" stroke="#E1E4E8" stroke-width="1.5"/>
+<rect x="30" y="348" width="5" height="136" rx="2.5" fill="#A65D3A"/>
+<text x="54" y="376" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="13" font-weight="700" fill="#A65D3A" text-anchor="start" letter-spacing="0.3">온라인 — 요청당 ~10ms</text>
+<rect x="54" y="394" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="137.0" y="421" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">① Store GET</text>
+<text x="137.0" y="440" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">~1ms</text>
+<line x1="228" y1="426" x2="254" y2="426" stroke="#A65D3A" stroke-width="2" marker-end="url(#mk-online)"/>
+<rect x="262" y="394" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="345.0" y="421" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">② Context 평가</text>
+<text x="345.0" y="440" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">~1ms</text>
+<line x1="436" y1="426" x2="462" y2="426" stroke="#A65D3A" stroke-width="2" marker-end="url(#mk-online)"/>
+<rect x="470" y="394" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="553.0" y="421" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">③ 재랭킹 · 정렬</text>
+<text x="553.0" y="440" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">~1ms</text>
+<line x1="644" y1="426" x2="670" y2="426" stroke="#A65D3A" stroke-width="2" marker-end="url(#mk-online)"/>
+<rect x="678" y="394" width="166" height="64" rx="10" fill="#F6F8FA" stroke="#D8DEE4" stroke-width="1.2"/>
+<text x="761.0" y="421" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="14" font-weight="600" fill="#1F2328" text-anchor="middle">④ 상위 N 반환</text>
+<text x="761.0" y="440" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace" font-size="11" font-weight="400" fill="#6E7781" text-anchor="middle">N = 6</text>
+<text x="450" y="508" font-family="-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic', 'Noto Sans KR', sans-serif" font-size="12" font-weight="400" fill="#6E7781" text-anchor="middle">ALS 행렬 곱은 오프라인에서 끝냅니다. 온라인은 캐시된 후보에 대한 가벼운 재랭킹만 수행합니다.</text>
+</svg>
