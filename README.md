@@ -56,8 +56,6 @@ Hu-Koren-Volinsky(2008)는 이걸 선호와 신뢰도로 분해합니다.
 
 ---
 
-## 10ms를 만드는 구조
-
 핵심은 **런타임에 모델을 돌리지 않는 것**입니다.
 
 <picture>
@@ -65,7 +63,7 @@ Hu-Koren-Volinsky(2008)는 이걸 선호와 신뢰도로 분해합니다.
   <img alt="오프라인 배치로 ALS를 학습해 CandidateStore에 후보를 적재하고, 온라인에서는 조회와 재랭킹만 수행하는 구조" src="docs/images/architecture-light.svg" width="100%">
 </picture>
 
-"추천을 실시간으로 계산한다"가 아니라 **"실시간 요소만 실시간으로 반영한다"**입니다.
+"추천을 실시간으로 계산한다"가 아니라 "실시간 요소만 실시간으로 반영한다"입니다.
 
 저장소는 인터페이스로 추상화해 파일 캐시와 Redis를 바꿔 끼울 수 있습니다
 ([`src/store/candidate_store.py`](src/store/candidate_store.py)).
