@@ -120,7 +120,7 @@ class LogGenerator:
 
         TODO: self._hour_cache[persona.id] 를 확률로 써서 0~23 중 하나 반환.
         """
-        raise NotImplementedError
+        return int(self.rng.choice(24, p=self._hour_cache[persona.id]))
 
     def generate_user_logs(self, user_id: str, persona: Persona) -> list[Event]:
         """유저 1명의 전체 기간 로그를 만듭니다.
