@@ -2,6 +2,7 @@
 numpy>=1.26
 pandas>=2.2
 scipy>=1.13
+pyarrow>=16.0          # pandas 의 parquet 입출력 엔진
 pyyaml>=6.0
 implicit>=0.7.2
 

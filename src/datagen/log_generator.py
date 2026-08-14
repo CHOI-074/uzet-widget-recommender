@@ -95,10 +95,17 @@ class LogGenerator:
     def assign_persona(self) -> Persona:
         """유저 1명에게 페르소나를 배정합니다.
 
-        TODO: self._persona_keys / self._persona_probs 로 하나를 뽑아 반환.
-        힌트: self.rng.choice(keys, p=probs)
+        personas.yaml 의 weight 비율대로 뽑습니다.
+        (rookie 0.35 / investor 0.25 / owner 0.2 / senior 0.2)
+
+        이 함수가 유저를 4가지 유형으로 갈라놓기 때문에 개인화 신호가 생깁니다.
+        모두가 같은 유형이면 ALS 가 배울 게 없어집니다.
         """
-        raise NotImplementedError
+        persona_id = self.rng.choice(self._persona_keys, p=self._persona_probs)
+        for persona in self.personas:
+            if persona.id == persona_id:
+                return persona
+        raise KeyError(f"알 수 없는 페르소나: {persona_id}")
 
     def sample_widget(self, persona: Persona) -> str:
         """이 유저가 이번에 클릭할 위젯 1개를 고릅니다.
@@ -109,11 +116,12 @@ class LogGenerator:
 
         이 혼합이 곧 "개인 취향 + 전체 인기"의 데이터 생성 과정(generative process)
         이고, ALS 가 나중에 복원해야 할 구조입니다.
-
-        TODO: 위 규칙대로 구현.
-        힌트: self._affinity_cache[persona.id], self._pop_keys/_pop_probs
         """
-        raise NotImplementedError
+        if self.rng.random() < persona.persona_ratio:
+            keys, probs = self._affinity_cache[persona.id]   # 개인 취향
+        else:
+            keys, probs = self._pop_keys, self._pop_probs    # 전체 인기
+        return str(self.rng.choice(keys, p=probs))
 
     def sample_hour(self, persona: Persona) -> int:
         """접속 시각(0~23)을 hour_weights 분포에서 뽑습니다.
@@ -138,13 +146,50 @@ class LogGenerator:
                             같은 세션에 노출만 되고 클릭 안 된 위젯을
                             impressions_per_click 개만큼 emit
 
-        타임스탬프는 self.start + day 일 + hour 시 + 랜덤 분/초로 만드세요.
-        (분 단위까지 같은 값이면 나중에 Recency 계산이 밋밋해집니다)
+        세션 수를 Poisson 으로 뽑는 이유: 하루 평균 2회라도 어떤 날은 0회,
+        어떤 날은 5회입니다. 고정값으로 만들면 모든 유저가 매일 같은 횟수로
+        접속하는 비현실적인 데이터가 되고, Recency 항을 검증할 수 없습니다.
 
-        TODO: 구현.
-        힌트: self.rng.poisson(lam), self.rng.integers(0, 60)
+        impression 은 "노출됐는데 클릭 안 한" 이벤트라 Fatigue 항의 입력입니다.
+        같은 세션에서 클릭된 위젯은 제외합니다.
         """
-        raise NotImplementedError
+        events: list[Event] = []
+
+        for day in range(self.gen.days):
+            n_sessions = int(self.rng.poisson(persona.daily_sessions))
+
+            for _ in range(n_sessions):
+                hour = self.sample_hour(persona)
+                # Poisson 이 0 을 뱉으면 빈 세션이 되므로 최소 1회는 보장합니다.
+                n_actions = max(1, int(self.rng.poisson(persona.actions_per_session)))
+                clicked: set[str] = set()
+
+                for _ in range(n_actions):
+                    timestamp = self.start + timedelta(
+                        days=day,
+                        hours=hour,
+                        minutes=int(self.rng.integers(0, 60)),
+                        seconds=int(self.rng.integers(0, 60)),
+                    )
+                    widget = self.sample_widget(persona)
+                    events.append(
+                        Event(user_id, persona.id, widget, timestamp, "click")
+                    )
+                    clicked.add(widget)
+
+                    if not self.gen.emit_impressions:
+                        continue
+
+                    # 같은 화면에 같이 떠 있었지만 눌리지 않은 위젯들
+                    for _ in range(self.gen.impressions_per_click):
+                        shown = self.sample_widget(persona)
+                        if shown in clicked:
+                            continue
+                        events.append(
+                            Event(user_id, persona.id, shown, timestamp, "impression")
+                        )
+
+        return events
 
     # ------------------------------------------------------------------
     # 아래는 완성된 배관
