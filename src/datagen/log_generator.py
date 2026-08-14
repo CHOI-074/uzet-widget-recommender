@@ -89,7 +89,6 @@ class LogGenerator:
         }
 
     # ------------------------------------------------------------------
-    # 여기서부터 직접 구현
     # ------------------------------------------------------------------
 
     def assign_persona(self) -> Persona:
@@ -101,6 +100,7 @@ class LogGenerator:
         이 함수가 유저를 4가지 유형으로 갈라놓기 때문에 개인화 신호가 생깁니다.
         모두가 같은 유형이면 ALS 가 배울 게 없어집니다.
         """
+
         persona_id = self.rng.choice(self._persona_keys, p=self._persona_probs)
         for persona in self.personas:
             if persona.id == persona_id:
@@ -146,6 +146,9 @@ class LogGenerator:
                             같은 세션에 노출만 되고 클릭 안 된 위젯을
                             impressions_per_click 개만큼 emit
 
+        타임스탬프는 self.start + day 일 + hour 시 + 랜덤 분/초로 만드세요.
+        (분 단위까지 같은 값이면 나중에 Recency 계산이 밋밋해집니다)
+
         세션 수를 Poisson 으로 뽑는 이유: 하루 평균 2회라도 어떤 날은 0회,
         어떤 날은 5회입니다. 고정값으로 만들면 모든 유저가 매일 같은 횟수로
         접속하는 비현실적인 데이터가 되고, Recency 항을 검증할 수 없습니다.
@@ -190,6 +193,7 @@ class LogGenerator:
                         )
 
         return events
+
 
     # ------------------------------------------------------------------
     # 아래는 완성된 배관
