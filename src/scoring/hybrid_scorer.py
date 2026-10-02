@@ -72,9 +72,14 @@ class HybridScorer:
         주의: 후보가 1개뿐이거나 전부 같은 값이면 max == min 이라 0으로 나눕니다.
         그 경우 전부 1.0 을 주든 0.5 를 주든 정하고, 이유를 주석에 남기세요.
 
-        TODO: 구현.
         """
-        raise NotImplementedError
+        if not scores:
+            return {}
+        low, high = min(scores.values()), max(scores.values())
+        if low == high:
+            # A tied candidate set carries no relative preference.
+            return {w: 0.5 for w in scores}
+        return {w: (value - low) / (high - low) for w, value in scores.items()}
 
     def recency(self, last_used: datetime | None, now: datetime) -> float:
         """마지막 사용 이후 경과시간의 지수 감쇠. 0~1.
@@ -84,9 +89,11 @@ class HybridScorer:
         한 번도 안 쓴 위젯(last_used is None)은 0.0.
         미래 시각이 들어오면(시계 오차) 1.0 으로 클램프하세요.
 
-        TODO: 구현. (self.config.half_life_hours)
         """
-        raise NotImplementedError
+        if last_used is None:
+            return 0.0
+        hours = max(0.0, (now - last_used).total_seconds() / 3600)
+        return 0.5 ** (hours / self.config.half_life_hours)
 
     def fatigue(self, unclicked: int) -> float:
         """노출됐는데 클릭 안 한 횟수 → 0~1 페널티.
@@ -96,9 +103,8 @@ class HybridScorer:
         같은 위젯을 계속 위에 띄웠는데 아무도 안 누르면 자리를 내주게 만드는
         장치입니다. 추천 시스템의 '필터 버블/고착' 완화 파트로 설명하면 좋습니다.
 
-        TODO: 구현. (self.config.fatigue_saturation)
         """
-        raise NotImplementedError
+        return min(1.0, max(0, unclicked) / self.config.fatigue_saturation)
 
     def score(
         self,
@@ -122,9 +128,21 @@ class HybridScorer:
                parts 를 채워두면 데모에서 "왜 이게 1위인지" 를 보여줄 수 있습니다.
                이거 하나가 README 설득력의 절반입니다.
 
-        TODO: 구현.
         """
-        raise NotImplementedError
+        candidates = list(dict.fromkeys(state.als_scores if candidates is None else candidates))
+        als = self.normalize_als({w: state.als_scores[w] for w in candidates if w in state.als_scores})
+        boosts = self.engine.evaluate(ctx)
+        result = []
+        for w in candidates:
+            self.catalog.by_id(w)  # Reject invalid candidates before returning an API response.
+            parts = {
+                "als": self.config.alpha * als.get(w, 0.0),
+                "context": self.config.beta * boosts.get(w, 0.0),
+                "recency": self.config.gamma * self.recency(state.last_used.get(w), ctx.now),
+                "fatigue": -self.config.delta * self.fatigue(state.unclicked_impressions.get(w, 0)),
+            }
+            result.append(ScoredWidget(w, sum(parts.values()), parts))
+        return sorted(result, key=lambda sw: (-sw.score, sw.widget_id))
 
     # ------------------------------------------------------------------
     # 아래는 완성된 배관
@@ -141,20 +159,16 @@ class HybridScorer:
 
         picked: list[ScoredWidget] = []
         used: dict[str, int] = {}
-        overflow: list[ScoredWidget] = []
 
         for sw in scored:
             cat = self.catalog.category_of(sw.widget_id)
             if used.get(cat, 0) < cap:
                 picked.append(sw)
                 used[cat] = used.get(cat, 0) + 1
-            else:
-                overflow.append(sw)
             if len(picked) == n:
                 return picked
 
-        # 상한 때문에 n 개를 못 채웠으면 밀려난 것들로 채웁니다.
-        picked.extend(overflow[: n - len(picked)])
+        # Category cap is a hard bound; return fewer than n if needed.
         return picked
 
     def recommend(

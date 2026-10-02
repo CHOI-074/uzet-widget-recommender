@@ -126,7 +126,7 @@ class LogGenerator:
     def sample_hour(self, persona: Persona) -> int:
         """접속 시각(0~23)을 hour_weights 분포에서 뽑습니다.
 
-        TODO: self._hour_cache[persona.id] 를 확률로 써서 0~23 중 하나 반환.
+        self._hour_cache[persona.id] 를 확률로 써서 0~23 중 하나 반환.
         """
         return int(self.rng.choice(24, p=self._hour_cache[persona.id]))
 

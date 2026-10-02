@@ -42,7 +42,7 @@ def build_user_states(
       2. last_used  : 클릭 이벤트 기준 위젯별 마지막 timestamp
       3. unclicked_impressions : action=="impression" 인 건수를 위젯별로 집계
          (같은 세션에서 클릭도 있었다면 빼는 게 정확하지만, 우선 단순 집계로
-          시작하고 개선 여지를 TODO 로 남겨도 됩니다)
+          시작하고 개선 여지를 문서에 남깁니다)
       4. persona_id : 로그의 persona_id (실서비스라면 온보딩 설문 결과)
 
     반환: {user_id: (UserState, persona_id)}
@@ -51,9 +51,21 @@ def build_user_states(
     유저마다 events 를 필터링하는 for 문을 돌리면 O(n_users * n_events) 라
     배치가 몇 분씩 걸립니다. **groupby 로 한 번에** 만드세요.
 
-    TODO: 구현.
     """
-    raise NotImplementedError
+    if top_k < 1:
+        raise ValueError("top_k must be positive")
+    result = {}
+    trained = set(artifacts.user_ids)
+    for user_id, group in events.groupby("user_id", sort=False):
+        if user_id not in trained:
+            continue
+        scores = artifacts.score_all(user_id)
+        top = dict(sorted(scores.items(), key=lambda pair: (-pair[1], pair[0]))[:top_k])
+        clicks = group.loc[group.action == "click"]
+        last = clicks.groupby("widget_id").timestamp.max().to_dict()
+        impressions = group.loc[group.action == "impression"].groupby("widget_id").size().to_dict()
+        result[user_id] = (UserState(top, last, impressions), str(group.persona_id.iloc[0]))
+    return result
 
 
 # ----------------------------------------------------------------------

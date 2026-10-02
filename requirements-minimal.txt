@@ -1,0 +1,12 @@
+# Python 3.12에서 검증한 최소 실행/테스트 의존성
+numpy==2.5.3
+pandas==3.0.6
+scipy==1.18.1
+pyarrow==25.0.1
+PyYAML==6.0.3
+implicit==0.7.3
+fastapi==0.142.2
+pydantic==2.13.5
+uvicorn==0.54.0
+pytest==9.1.1
+httpx==0.28.1

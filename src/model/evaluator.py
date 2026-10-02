@@ -64,34 +64,49 @@ def leave_one_out_split(events: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFram
       - 클릭이 2건 미만인 유저는 학습에만 남기고 테스트에서 제외
         (정답을 빼면 학습 데이터가 0이 되는 유저는 평가 대상이 될 수 없습니다)
 
-    TODO: 구현.
     힌트: action=="click" 필터 → sort_values("timestamp") → groupby("user_id").tail(1)
     """
-    raise NotImplementedError
+    # Work with positional indices so duplicate input labels cannot remove extra rows.
+    data = events.reset_index(drop=True)
+    clicks = data.loc[data.action == "click"].sort_values("timestamp", kind="stable")
+    eligible = clicks.groupby("user_id").filter(lambda group: len(group) >= 2)
+    held = eligible.groupby("user_id", sort=False).tail(1)
+    # Exclude later impressions too: they would leak future fatigue information.
+    cutoff = held.set_index("user_id").timestamp
+    limits = data.user_id.map(cutoff)
+    keep = limits.isna() | (data.timestamp < limits)
+    # Clicks tied with the held event are excluded; users without earlier clicks
+    # cannot be evaluated and stay entirely in training.
+    prior_users = set(data.loc[keep & (data.action == "click"), "user_id"])
+    held = held[held.user_id.isin(prior_users)]
+    limits = data.user_id.map(held.set_index("user_id").timestamp)
+    keep = limits.isna() | (data.timestamp < limits)
+    return data.loc[keep].copy(), held.copy()
 
 
 def recall_at_k(ranked: list[str], truth: str, k: int) -> float:
     """정답이 상위 k 안에 있으면 1.0, 아니면 0.0.
 
-    TODO: 구현.
     """
-    raise NotImplementedError
+    return float(k > 0 and truth in ranked[:k])
 
 
 def ndcg_at_k(ranked: list[str], truth: str, k: int) -> float:
     """정답의 순위를 반영한 점수. 정답이 1개이므로 1/log2(rank+1) (1-based).
 
-    TODO: 구현.
     """
-    raise NotImplementedError
+    if k <= 0 or truth not in ranked[:k]:
+        return 0.0
+    return float(1.0 / np.log2(ranked.index(truth) + 2))
 
 
 def coverage_at_k(all_ranked: list[list[str]], catalog_size: int, k: int) -> float:
     """전 유저의 상위 k 추천에 등장한 고유 아이템 수 / 카탈로그 크기.
 
-    TODO: 구현.
     """
-    raise NotImplementedError
+    if catalog_size <= 0 or k <= 0:
+        return 0.0
+    return len({w for ranked in all_ranked for w in ranked[:k]}) / catalog_size
 
 
 # ----------------------------------------------------------------------

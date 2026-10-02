@@ -83,16 +83,29 @@ class ContextEngine:
         (지금은 안 잡아도 됩니다. 다만 이 한계를 README 에 적어두면
         "엣지 케이스를 인지하고 범위를 정했다"가 됩니다)
 
-        TODO: 구현.
         """
-        raise NotImplementedError
+        kind = cond["type"]
+        if kind == "day_of_month_near":
+            return abs(ctx.day - cond["day"]) <= cond["tolerance"]
+        if kind == "day_of_month_gte":
+            return ctx.day >= cond["day"]
+        if kind == "days_before_day":
+            return 0 < cond["day"] - ctx.day <= cond["lead"]
+        if kind == "time_range":
+            start, end = parse_hhmm(cond["start"]), parse_hhmm(cond["end"])
+            current = ctx.hour_minute.replace(tzinfo=None)
+            return start <= current <= end if start <= end else current >= start or current <= end
+        if kind == "weekday":
+            return ctx.weekday in cond["days"]
+        if kind == "flag":
+            return bool(ctx.flags.get(cond["name"], False))
+        raise ValueError(f"unknown condition type: {kind}")
 
     def matches(self, rule: ContextRule, ctx: RequestContext) -> bool:
         """규칙의 모든 조건이 참이어야 규칙이 발동합니다 (AND).
 
-        TODO: 구현. (match_condition 을 전부 통과하는지)
         """
-        raise NotImplementedError
+        return all(self.match_condition(cond, ctx) for cond in rule.conditions)
 
     def evaluate(self, ctx: RequestContext) -> dict[str, float]:
         """발동한 규칙들의 boost 를 위젯별로 합산해 반환합니다.
@@ -103,9 +116,13 @@ class ContextEngine:
 
         반환 예: {"salary_manage": 1.0, "savings": 0.7}
 
-        TODO: 구현.
         """
-        raise NotImplementedError
+        boosts: dict[str, float] = {}
+        for rule in self.config.rules:
+            if self.matches(rule, ctx):
+                for widget, boost in rule.boost.items():
+                    boosts[widget] = boosts.get(widget, 0.0) + boost
+        return boosts
 
     # ------------------------------------------------------------------
 

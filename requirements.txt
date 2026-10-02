@@ -14,6 +14,7 @@ redis>=5.0            # RedisCandidateStore 사용 시에만 필요
 
 # --- 개발/실험 ---
 pytest>=8.2
+httpx>=0.27           # FastAPI 통합 테스트
 jupyter>=1.0
 matplotlib>=3.9
 streamlit>=1.35       # Step 5 데모 (선택)
