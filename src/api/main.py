@@ -24,13 +24,14 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Query, Request
 from pydantic import BaseModel
 
 from src.config import DATA_DIR, load_catalog, load_scoring
 from src.scoring.context_rules import RequestContext
-from src.scoring.hybrid_scorer import HybridScorer, ScoredWidget, fallback_widgets
+from src.scoring.hybrid_scorer import HybridScorer, ScoredWidget, UserState
 from src.store.candidate_store import CandidateStore, build_store
 
 BACKEND = os.getenv("CANDIDATE_BACKEND", "file")
@@ -58,7 +59,7 @@ app = FastAPI(title="UZET Widget Recommender", version="0.1.0", lifespan=lifespa
 
 @app.middleware("http")
 async def add_latency_header(request: Request, call_next):
-    """응답 시간 측정 — 이력서의 '10ms' 를 증명하는 최소 장치."""
+    """개별 요청 처리 시간. 부하 테스트 결과나 성능 보장은 아닙니다."""
     t0 = time.perf_counter()
     response = await call_next(request)
     elapsed_ms = (time.perf_counter() - t0) * 1000
@@ -113,36 +114,27 @@ def recommend(
     scoring = state["scoring"]
     n = n or scoring.default_n                  # type: ignore[union-attr]
 
-    ctx = RequestContext(now=now or datetime.now(), flags={"is_roaming": is_roaming})
+    request_time = now or datetime.now(ZoneInfo("Asia/Seoul"))
+    if request_time.tzinfo is not None:
+        request_time = request_time.astimezone(ZoneInfo("Asia/Seoul")).replace(tzinfo=None)
+    ctx = RequestContext(now=request_time, flags={"is_roaming": is_roaming})
     cached = store.get(user_id)
 
     if cached is None:
-        # ------------------------------------------------------------------
-        # TODO: 콜드 스타트 폴백을 여기서 처리하세요.
-        #
-        # 지금은 캐시에 없는 유저 = 신규 유저입니다. 선택지가 몇 가지 있습니다.
-        #   (a) 404 를 던진다            → 클라이언트가 빈 화면을 그림. 최악.
-        #   (b) 전역 인기순 Top-N        → 무난하지만 개인화가 0
-        #   (c) 페르소나 기본 세트       → 온보딩에서 페르소나를 물었다면 최선
-        #
-        # fallback_widgets(persona_id, n) 이 (c) 용으로 준비돼 있습니다.
-        # 다만 신규 유저의 persona_id 를 어디서 받을지가 설계 문제입니다.
-        #   - 쿼리 파라미터로 받는다? (클라이언트가 알고 있어야 함)
-        #   - 기본 페르소나를 하나 정한다? (어느 것을? 근거는?)
-        # 무엇을 골랐든 **이유를 README 에 적으세요.** 면접에서 반드시 물어봅니다.
-        #
-        # 폴백 결과에도 Context 부스팅은 적용하는 게 맞을까요? (힌트: 적용하면
-        # 신규 유저도 급여일에 월급관리를 위에서 봅니다. 비용은 거의 0입니다)
-        # ------------------------------------------------------------------
-        raise HTTPException(status_code=501, detail="콜드 스타트 폴백 미구현")
-
-    user_state, _persona_id = cached
+        # No persona was supplied, so do not infer one. Use the documented
+        # catalog prior and apply the same context rules to all new users.
+        user_state = UserState(als_scores=dict(scorer.catalog.global_popularity))
+    else:
+        user_state, _persona_id = cached
     scored = scorer.recommend(user_state, ctx, n=n)
+    if cached is None:
+        for widget in scored:
+            widget.parts["prior"] = widget.parts.pop("als")
 
     return RecommendResponse(
         user_id=user_id,
         generated_at=ctx.now,
-        source="personalized",
+        source="fallback" if cached is None else "personalized",
         fired_rules=scorer.engine.explain(ctx),
         widgets=_to_out(scored),
     )

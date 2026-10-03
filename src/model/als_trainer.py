@@ -66,9 +66,11 @@ def to_confidence(counts: np.ndarray, alpha: float, log_scaling: bool) -> np.nda
     둘 다 구현해 놓고 어느 쪽이 Recall/Coverage 에 유리했는지
     docs/evaluation.md 에 남기세요. 그 비교가 곧 면접 답변입니다.
 
-    TODO: 구현.
     """
-    raise NotImplementedError
+    counts = np.asarray(counts, dtype=float)
+    if alpha < 0 or not np.isfinite(alpha) or not np.isfinite(counts).all() or (counts < 0).any():
+        raise ValueError("counts and alpha must be finite and non-negative")
+    return 1.0 + alpha * (np.log1p(counts) if log_scaling else counts)
 
 
 def build_interactions(
@@ -88,9 +90,21 @@ def build_interactions(
         4. to_confidence() 로 값 변환
         5. csr_matrix((values, (rows, cols)), shape=(n_users, n_items))
 
-    TODO: 구현.
     """
-    raise NotImplementedError
+    clicks = events.loc[events.action == "click"]
+    if not clicks.widget_id.isin(catalog.ids).all():
+        raise ValueError("click log contains unknown widgets")
+    user_ids = sorted(clicks.user_id.unique().tolist())
+    item_ids = catalog.ids
+    user_pos = {u: i for i, u in enumerate(user_ids)}
+    item_pos = {w: i for i, w in enumerate(item_ids)}
+    counts = clicks.groupby(["user_id", "widget_id"]).size()
+    rows = [user_pos[u] for u, _ in counts.index]
+    cols = [item_pos[w] for _, w in counts.index]
+    values = to_confidence(counts.to_numpy(), alpha, log_scaling)
+    return Interactions(csr_matrix((values, (rows, cols)),
+                                  shape=(len(user_ids), len(item_ids)), dtype=np.float32),
+                        user_ids, item_ids)
 
 
 # ----------------------------------------------------------------------
@@ -132,6 +146,9 @@ def train(
 ) -> ALSArtifacts:
     from implicit.als import AlternatingLeastSquares
 
+    if interactions.matrix.shape[0] == 0 or interactions.matrix.nnz == 0:
+        raise ValueError("at least one click is required to train ALS")
+
     model = AlternatingLeastSquares(
         factors=factors,
         regularization=regularization,
@@ -140,6 +157,8 @@ def train(
         # alpha 는 이미 to_confidence() 에서 행렬 값에 반영했으므로 1.0 으로 둡니다.
         # 여기서 또 곱하면 alpha 가 이중 적용됩니다. (흔한 실수)
         alpha=1.0,
+        use_gpu=False,
+        num_threads=1,
     )
     model.fit(interactions.matrix)
 
