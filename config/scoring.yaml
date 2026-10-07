@@ -1,12 +1,3 @@
-# 하이브리드 스코어 설정
-#
-#   final_score(u, w, ctx) = alpha * ALS_norm(u, w)
-#                          + beta  * Context_boost(w, ctx)
-#                          + gamma * Recency(u, w)
-#                          - delta * Fatigue(u, w)
-#
-# 값을 바꿔가며 추천 결과가 어떻게 달라지는지 docs/evaluation.md 에 기록하세요.
-# "왜 이 값이죠?" 에 답할 수 있어야 합니다.
 
 weights:
   alpha: 1.00   # 장기 선호 (ALS)
@@ -28,15 +19,6 @@ serving:
   # 같은 카테고리가 결과를 독식하지 않도록 제한 (0 이면 비활성)
   max_per_category: 3
 
-# --- Context 규칙 ---
-# condition.type 별 필요한 필드
-#   day_of_month_near : day, tolerance          (급여일 ±N)
-#   day_of_month_gte  : day                     (월말)
-#   days_before_day   : day, lead               (카드 결제일 D-N)
-#   time_range        : start, end (HH:MM)
-#   weekday           : days [0=월 ... 6=일]
-#   flag              : name                    (요청에 실린 불리언 플래그)
-# 여러 조건은 AND 로 묶입니다 (all).
 context_rules:
   - name: payday
     description: 급여일 ±1일
