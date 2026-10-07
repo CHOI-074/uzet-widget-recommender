@@ -1,27 +1,3 @@
-"""Step 1 — 페르소나 기반 합성 사용자 행동 로그 생성기.
-
-왜 합성 데이터인가
-------------------
-실서비스 로그가 없습니다. 그렇다고 랜덤 데이터를 쓰면 ALS 가 학습할 구조 자체가
-없어서 추천이 무의미해집니다. 그래서 "사람마다 다른 취향이 있다"는 구조를
-페르소나로 심어 넣고, 그 구조를 모델이 다시 찾아내는지를 보는 게 목적입니다.
-
-의도적으로 넣어야 하는 성질 3가지 (면접에서 설명할 재료)
-  1. 개인화 신호  : 페르소나별 affinity 가 다름 → ALS 가 잡아야 할 대상
-  2. 인기 편중    : global_popularity 상위 3개가 클릭의 과반 → Coverage 문제의 원인
-  3. 시간대 편향  : hour_weights → Context 규칙이 의미를 갖게 만드는 조건
-
-출력 스키마
------------
-    user_id      str    "u000123"
-    persona_id   str    정답 라벨. 학습에는 쓰지 않고 평가·디버깅에만 씁니다.
-    widget_id    str
-    timestamp    datetime64[ns]
-    action       str    "click" | "impression"
-
-impression(노출됐는데 클릭 안 함) 행은 Fatigue 항의 입력입니다.
-"""
-
 from __future__ import annotations
 
 import argparse
@@ -131,31 +107,7 @@ class LogGenerator:
         return int(self.rng.choice(24, p=self._hour_cache[persona.id]))
 
     def generate_user_logs(self, user_id: str, persona: Persona) -> list[Event]:
-        """유저 1명의 전체 기간 로그를 만듭니다.
 
-        의사코드 (설계서 3장)
-            for day in range(self.gen.days):
-                n_sessions ~ Poisson(persona.daily_sessions)
-                for each session:
-                    hour = self.sample_hour(persona)
-                    n_actions ~ max(1, Poisson(persona.actions_per_session))
-                    for each action:
-                        widget = self.sample_widget(persona)
-                        emit click 이벤트
-                        if self.gen.emit_impressions:
-                            같은 세션에 노출만 되고 클릭 안 된 위젯을
-                            impressions_per_click 개만큼 emit
-
-        타임스탬프는 self.start + day 일 + hour 시 + 랜덤 분/초로 만드세요.
-        (분 단위까지 같은 값이면 나중에 Recency 계산이 밋밋해집니다)
-
-        세션 수를 Poisson 으로 뽑는 이유: 하루 평균 2회라도 어떤 날은 0회,
-        어떤 날은 5회입니다. 고정값으로 만들면 모든 유저가 매일 같은 횟수로
-        접속하는 비현실적인 데이터가 되고, Recency 항을 검증할 수 없습니다.
-
-        impression 은 "노출됐는데 클릭 안 한" 이벤트라 Fatigue 항의 입력입니다.
-        같은 세션에서 클릭된 위젯은 제외합니다.
-        """
         events: list[Event] = []
 
         for day in range(self.gen.days):
